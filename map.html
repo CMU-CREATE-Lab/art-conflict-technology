@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Data Layer: Simple</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+
+      input {
+        border-radius: 4px;
+        height: 27px;
+        font-size: 14px;
+        /*width: 100%;*/
+        background: #fff;
+        padding: 0 9px;
+        font-size: 12px;
+        outline: none;
+        cursor: pointer;
+        border: 1px solid #e5e5e5;
+      }
+
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
+    <script>
+    var map;
+    var markers = [];
+    var infowindows = [];
+
+    function init() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 40.4397, lng: -79.9764 },
+        zoom: 12
+      });
+
+      //// NOTE: This uses cross-domain XHR, and may not work on older browsers.
+      map.data.loadGeoJson("http://pghgis.pittsburghpa.opendata.arcgis.com/datasets/87a7e06c5d8440f280ce4b1e4f75cc84_0.geojson");
+
+      var centerControlDiv = document.createElement('div');
+      var centerControl = new AddMarkerControl(centerControlDiv, map);
+
+      centerControlDiv.index = 1;
+      map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+    }
+
+    function addMarkerToMap() {
+      var marker = new google.maps.Marker({
+        map: map,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+        position: {lat: map.center.lat(), lng: map.center.lng()}
+      });
+      markers.push(marker);
+
+      var i = markers.length - 1;
+
+      var contentString = '<div id="content_' + i + '" class="editable">'+
+        '<input id="input_'+i+'" type="text" title="Add content" placeholder="Add content" value=""> '+ 
+        '<input id="save_'+i+'" type="button" title="Save" value="Save">' +
+        '</div>';
+
+      var infowindow = new google.maps.InfoWindow({
+        content: contentString
+      });
+      infowindows.push(infowindow);
+
+      google.maps.event.addListener(infowindows[i], 'domready', function(){
+        var el = document.getElementById("content_" + i);
+        el.addEventListener('click', function() {
+          if (el.className == "editable") {
+            var ell = document.getElementById("save_" + i);
+            var elll = document.getElementById("input_" + i);
+
+            if (ell) {
+              ell.addEventListener("click", function(){
+                var contentString = '<div id="content_' + i + '" class="saved">'+
+                elll.value +
+                '</div>';
+                infowindows[i].setContent(contentString);
+
+              });
+            }
+          }
+        });
+
+      });
+
+      markers[i].addListener('click', function() {
+        infowindows[i].open(map, markers[i]);
+      });
+
+      markers[i].addListener('rightclick', function() {
+        markers[i].setMap(null);        
+    });
+
+
+
+    }
+
+    function AddMarkerControl(controlDiv, map) {
+
+      // Set CSS for the control border.
+      var controlUI = document.createElement('div');
+      controlUI.style.backgroundColor = '#fff';
+      controlUI.style.border = '2px solid #fff';
+      controlUI.style.borderRadius = '3px';
+      controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+      controlUI.style.cursor = 'pointer';
+      controlUI.style.marginBottom = '22px';
+      controlUI.style.textAlign = 'center';
+      controlUI.title = 'Add marker to the map';
+      controlDiv.appendChild(controlUI);
+
+      // Set CSS for the control interior.
+      var controlText = document.createElement('div');
+      controlText.style.color = 'rgb(25,25,25)';
+      controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+      controlText.style.fontSize = '16px';
+      controlText.style.lineHeight = '38px';
+      controlText.style.paddingLeft = '5px';
+      controlText.style.paddingRight = '5px';
+      controlText.innerHTML = 'Add Marker';
+      controlUI.appendChild(controlText);
+
+      // Setup the click event listeners: simply set the map to Chicago.
+      controlUI.addEventListener('click', function() {
+        addMarkerToMap();
+      });
+
+    }
+
+
+    document.addEventListener('DOMContentLoaded', init, false);
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>
