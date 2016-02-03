@@ -34,7 +34,19 @@
     var markers = [];
     var infowindows = [];
 
+    function guid() {
+      return ("00000" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-5)
+    }
+
     function init() {
+      if (window.location.hash) {
+        console.log(window.location.hash);
+      } else {
+        console.log('No hash');
+        var g = guid();
+        window.location.hash = g;
+      }
+
       map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 40.4397, lng: -79.9764 },
         zoom: 12
