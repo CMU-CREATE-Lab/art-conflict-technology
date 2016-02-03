@@ -38,6 +38,26 @@
       return ("00000" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-5)
     }
 
+    function jsonStringify(markers, infowindows) {
+      var json_markers = [];
+      var json_infowindows = [];
+      for (var i = 0; i < markers.length; i++ ) {
+        var marker = {
+          position: {
+            lat: markers[i].position.lat(),
+            lng: markers[i].position.lng()           
+          },
+          map: markers[i].map ? true : false
+        };
+        var infowindow = {
+          content: infowindows[i].content
+        };
+        json_markers.push(marker);
+        json_infowindows.push(infowindow);
+      }
+      return JSON.stringify({markers: json_markers, infowindows: json_infowindows});
+    }
+
     function init() {
       if (window.location.hash) {
         console.log(window.location.hash);
