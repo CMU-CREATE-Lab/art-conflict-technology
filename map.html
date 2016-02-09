@@ -33,12 +33,25 @@
     var map;
     var markers = [];
     var infowindows = [];
+    var hash;
+
+    var data;
 
     function guid() {
       return ("00000" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-5)
     }
 
-    function jsonStringify(markers, infowindows) {
+
+    function testPost() {
+      var json = jsonStringify(hash, markers, infowindows);
+      post(json, 'myapp')
+    }
+
+    function testGet() {
+      get(hash, 'pgh-maps');
+    }
+
+    function jsonStringify(hash, markers, infowindows) {
       var json_markers = [];
       var json_infowindows = [];
       for (var i = 0; i < markers.length; i++ ) {
@@ -50,21 +63,54 @@
           map: markers[i].map ? true : false
         };
         var infowindow = {
-          content: infowindows[i].content
+          content: encodeURIComponent(btoa(infowindows[i].content))
         };
         json_markers.push(marker);
         json_infowindows.push(infowindow);
       }
-      return JSON.stringify({markers: json_markers, infowindows: json_infowindows});
+      return JSON.stringify({hash: hash, markers: json_markers, infowindows: json_infowindows});
     }
+
+    function post(json, url) {
+      console.log(json);
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
+      xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+      xhr.onload = function() {
+        console.log(xhr.responseText);
+      }
+      xhr.send('data=' + json);
+    }
+
+
+    function get(hash, url, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url + '/' + hash + '.json');
+      xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+      xhr.onload = function() {
+        if (callback) {
+          callback(xhr.responseText);
+        }
+      }
+      xhr.send();
+    }
+
+    function parseJson(txt) {
+      data = JSON.parse(txt);
+      for (var i = 0; i < data.markers.length; i++) {
+        addMarkerToMap(data.markers[i], data.infowindows[i]);
+      }
+    }    
 
     function init() {
       if (window.location.hash) {
-        console.log(window.location.hash);
+        hash = window.location.hash.replace("#","");
+        get(hash, 'pgh-maps', parseJson);
+
       } else {
-        console.log('No hash');
-        var g = guid();
-        window.location.hash = g;
+        hash = guid();
+        window.location.hash = hash;
+        testPost();
       }
 
       map = new google.maps.Map(document.getElementById('map'), {
@@ -80,15 +126,32 @@
 
       centerControlDiv.index = 1;
       map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+      var centerControlDiv = document.createElement('div');
+      var centerControl = new SaveMapControl(centerControlDiv, map);
+
+      centerControlDiv.index = 1;
+      map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
     }
 
-    function addMarkerToMap() {
-      var marker = new google.maps.Marker({
-        map: map,
-        draggable: true,
-        animation: google.maps.Animation.DROP,
-        position: {lat: map.center.lat(), lng: map.center.lng()}
-      });
+    function addMarkerToMap(myMarker, myInfoWindow) {
+      var marker;
+      if (myMarker) { 
+        marker = new google.maps.Marker({
+          map: myMarker.map ? map : null,
+          draggable: true,
+          animation: google.maps.Animation.DROP,
+          position: {lat: myMarker.position.lat, lng: myMarker.position.lng}
+        });
+      } else {
+        marker = new google.maps.Marker({
+          map: map,
+          draggable: true,
+          animation: google.maps.Animation.DROP,
+          position: {lat: map.center.lat(), lng: map.center.lng()}
+        });
+      }
       markers.push(marker);
 
       var i = markers.length - 1;
@@ -98,9 +161,17 @@
         '<input id="save_'+i+'" type="button" title="Save" value="Save">' +
         '</div>';
 
-      var infowindow = new google.maps.InfoWindow({
-        content: contentString
-      });
+
+      var infowindow;
+      if (myInfoWindow) {
+        infowindow = new google.maps.InfoWindow({
+          content: atob(myInfoWindow.content)
+        });
+      } else {
+        infowindow = new google.maps.InfoWindow({
+          content: contentString
+        });
+      }
       infowindows.push(infowindow);
 
       google.maps.event.addListener(infowindows[i], 'domready', function(){
@@ -167,6 +238,41 @@
       });
 
     }
+
+    function SaveMapControl(controlDiv, map) {
+
+      // Set CSS for the control border.
+      var controlUI = document.createElement('div');
+      controlUI.style.backgroundColor = '#fff';
+      controlUI.style.border = '2px solid #fff';
+      controlUI.style.borderRadius = '3px';
+      controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+      controlUI.style.cursor = 'pointer';
+      controlUI.style.marginBottom = '22px';
+      controlUI.style.marginLeft = '22px';
+      controlUI.style.textAlign = 'center';
+      controlUI.title = 'Save Map';
+      controlDiv.appendChild(controlUI);
+
+      // Set CSS for the control interior.
+      var controlText = document.createElement('div');
+      controlText.style.color = 'rgb(25,25,25)';
+      controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+      controlText.style.fontSize = '16px';
+      controlText.style.lineHeight = '38px';
+      controlText.style.paddingLeft = '5px';
+      controlText.style.paddingRight = '5px';
+      controlText.innerHTML = 'Save Map';
+      controlUI.appendChild(controlText);
+
+      // Setup the click event listeners: simply set the map to Chicago.
+      controlUI.addEventListener('click', function() {
+        testPost();
+      });
+
+    }
+
+
 
 
     document.addEventListener('DOMContentLoaded', init, false);
