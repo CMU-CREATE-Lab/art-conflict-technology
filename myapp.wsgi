@@ -1,0 +1,1 @@
+/usr/local/www/wsgi-scripts/myapp.wsgi
