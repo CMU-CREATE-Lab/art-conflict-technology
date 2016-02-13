@@ -20,6 +20,17 @@
         width: 100%;
         background-color: #333;
       }
+
+      iframe {
+        width:500px;
+        height:500px;
+      }
+      .leaflet-popup-content {
+        width:auto !important;
+        min-width: 185px;
+      }
+
+
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
     <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
@@ -102,9 +113,29 @@
             content: atob(myInfoWindow.content)
           });
         } else {
-          popup = L.popup();
+          popup = L.popup({},marker);
           popup.setContent(contentString);
           marker.bindPopup(popup);
+          marker.on('popupopen', function() {
+            var el = document.getElementById("content_" + i);
+            el.addEventListener('click', function() {
+              if (el.className == "editable") {
+                var ell = document.getElementById("save_" + i);
+                var elll = document.getElementById("input_" + i);
+
+                if (ell) {
+                  ell.addEventListener("click", function(){
+                    var contentString = '<div id="content_' + i + '" class="saved">'+
+                    elll.value +
+                    '</div>';
+                    popups[i].setContent(contentString);
+
+                  });
+                }
+              }
+            });
+
+          });
 
         }
         popups.push(popup);
