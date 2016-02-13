@@ -47,11 +47,15 @@
       }
       var currentTileLayer = "toner";
 
+      var showNeighborhoods = false;
+      var neighborhoodsLayer;
+
       var currentCensusColor = false;
 
 
       var MapOptions = function() {
         this.tileLayer = 'toner';
+        this.showNeighborhoods = false;
         this.currentCensusSelection = '';
       };
 
@@ -61,7 +65,6 @@
         var opts = {'Toner' : 'toner', 'Terrain': 'terrain', 'Watercolor': 'watercolor', 'Dark': 'dark'};
         var f1 = gui.add(propelOptions, 'tileLayer', opts).name('Base Map');
         f1.onChange(function(newValue) {
-          console.log(newValue);
           if (newValue != currentTileLayer) {
             leafletMap.removeLayer(tileLayers[currentTileLayer]);
             leafletMap.addLayer(tileLayers[newValue]);
@@ -69,7 +72,16 @@
           }
         });
 
-        var f2 = gui.addFolder('Housing Units');
+        var f2 = gui.add(propelOptions, 'showNeighborhoods').name('Neighborhoods');
+        f2.onChange(function(newValue) {
+          if (newValue) {
+            leafletMap.addLayer(neighborhoodsLayer);
+          } else {
+            leafletMap.removeLayer(neighborhoodsLayer);
+          }
+        });
+
+/*        var f2 = gui.addFolder('Housing Units');
         var opts = {'': false, 'Total' : 'housing_units_color', 'Occupied': 'housing_units_occupied_color', 'Vacant': 'housing_units_vacant_color'}
         var con = f2.add(propelOptions, 'currentCensusSelection', opts).name('Selection');
         con.onChange(function(newValue) {
@@ -82,17 +94,12 @@
           }});
 
         f2.open();
-
+*/
       }
 
       function initMap() {
         var leafletMap  = L.map('map').setView([40.4397, -79.9674], 12);
-        /*L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/{z}/{x}/{y}.png").addTo(leafletMap);
-        */
         leafletMap.addLayer(tileLayers[currentTileLayer]);
-        /*
-        L.tileLayer("http://{s}.sm.mapstack.stamen.com/(watercolor,$fff[hsl-saturation@50],$ff5500[hsl-color@30]),(naip,$fff[hsl-saturation@20],mapbox-water[destination-out])[overlay]/{z}/{x}/{y}.png").addTo(leafletMap);
-        */
         return leafletMap;
       }
 
@@ -206,7 +213,6 @@
 
         function loadGeoJSON(data) {
           citydata = data;
-          var featureLayer = new L.GeoJSON();
             // Set a default style for out the polygons will appear
             var defaultStyle = {
                 color: "#333333",
@@ -233,19 +239,19 @@
                 layer.setStyle(defaultStyle); 
               });              
             }
-            var featureLayer = L.geoJson(data, {
+            neighborhoodsLayer = L.geoJson(data, {
               // And link up the function to run when loading each feature
                 onEachFeature: onEachFeature
             });
             // Finally, add the layer to the map.
-            leafletMap.addLayer(featureLayer);  
+            //leafletMap.addLayer(neighborhoodsLayer);  
         }
 
         function init() {
           leafletMap = initMap();
           initGui();
           //get('census_blocks_housing.geojson', initTiles);
-          //get('Neighborhoods_with_SNAP_Data.geojson', loadGeoJSON);
+          get('Neighborhoods_with_SNAP_Data.geojson', loadGeoJSON);
 
         }
         document.addEventListener('DOMContentLoaded', init, false);
