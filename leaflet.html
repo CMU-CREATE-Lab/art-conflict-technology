@@ -1,9 +1,8 @@
 <!doctype html>
 <html>
   <head>
-    <title>Many polygons with geojson-vt on Leaflet</title>
+    <title>ACT 2016 -- PIT Map</title>
     <meta charset="utf-8">
-
     <style>
       html, body {
         height: 100%;
@@ -222,8 +221,8 @@
         function init() {
           leafletMap = initMap();
           initGui();
-          get('census_blocks_housing.geojson', initTiles);
-          get('Neighborhoods_with_SNAP_Data.geojson', loadGeoJSON);
+          //get('census_blocks_housing.geojson', initTiles);
+          //get('Neighborhoods_with_SNAP_Data.geojson', loadGeoJSON);
 
         }
         document.addEventListener('DOMContentLoaded', init, false);
