@@ -61,7 +61,30 @@
         this.tileLayer = 'toner';
         this.showNeighborhoods = false;
         this.dataLayer = '';
+        this.addMarker = function() {
+          addMarkerToMap();
+        };
       };
+
+      var markers = [];
+
+      function addMarkerToMap(myMarker, myInfoWindow) {
+        var marker;
+        if (myMarker) { 
+          marker = new google.maps.Marker({
+            map: myMarker.map ? map : null,
+            draggable: true,
+            animation: google.maps.Animation.DROP,
+            position: {lat: myMarker.position.lat, lng: myMarker.position.lng}
+          });
+        } else {
+          var center = leafletMap.getCenter();        
+          var latlng = [center.lat, center.lng];
+          marker = L.marker(latlng, {draggable: true});
+          marker.addTo(leafletMap);
+        }
+        markers.push(marker);
+      }
 
       function initGui() {
         propelOptions = new MapOptions();
@@ -101,6 +124,7 @@
           }
         });
 
+        var f4 = gui.add(propelOptions, 'addMarker').name('Add Marker');
 
 /*        var f2 = gui.addFolder('Housing Units');
         var opts = {'': false, 'Total' : 'housing_units_color', 'Occupied': 'housing_units_occupied_color', 'Vacant': 'housing_units_vacant_color'}
