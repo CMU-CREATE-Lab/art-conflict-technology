@@ -14,7 +14,6 @@
         font-size:12px;
         color:#808080;
       }
-
       #map {
         position: absolute;
         height: 100%;
@@ -24,6 +23,7 @@
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
     <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
     <script src="geojson-vt-dev.js"></script>
     <script src="L.CanvasTiles.js"></script>
     <script type="text/javascript" src="dat.gui.min.js"></script>
@@ -35,21 +35,43 @@
       var censusdata;
       var citydata;
 
-
       var gui;
       var mapOptions;
 
+
+      var tileLayers = {
+        "toner": new L.StamenTileLayer("toner", { detectRetina: true }),
+        "terrain": new L.StamenTileLayer("terrain", { detectRetina: true }),
+        "watercolor": new L.StamenTileLayer("watercolor", { detectRetina: true }),
+        "dark": new L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/{z}/{x}/{y}.png")
+      }
+      var currentTileLayer = "toner";
+
       var currentCensusColor = false;
+
+
       var MapOptions = function() {
+        this.tileLayer = 'toner';
         this.currentCensusSelection = '';
       };
 
       function initGui() {
         propelOptions = new MapOptions();
         gui = new dat.GUI();
-        var f1 = gui.addFolder('Housing Units');
+        var opts = {'Toner' : 'toner', 'Terrain': 'terrain', 'Watercolor': 'watercolor', 'Dark': 'dark'};
+        var f1 = gui.add(propelOptions, 'tileLayer', opts).name('Base Map');
+        f1.onChange(function(newValue) {
+          console.log(newValue);
+          if (newValue != currentTileLayer) {
+            leafletMap.removeLayer(tileLayers[currentTileLayer]);
+            leafletMap.addLayer(tileLayers[newValue]);
+            currentTileLayer = newValue;
+          }
+        });
+
+        var f2 = gui.addFolder('Housing Units');
         var opts = {'': false, 'Total' : 'housing_units_color', 'Occupied': 'housing_units_occupied_color', 'Vacant': 'housing_units_vacant_color'}
-        var con = f1.add(propelOptions, 'currentCensusSelection', opts).name('Selection');
+        var con = f2.add(propelOptions, 'currentCensusSelection', opts).name('Selection');
         con.onChange(function(newValue) {
           if (newValue != '') {
             currentCensusColor = newValue;
@@ -59,14 +81,15 @@
             tileLayer.redraw();            
           }});
 
-        f1.open();
+        f2.open();
 
       }
 
       function initMap() {
         var leafletMap  = L.map('map').setView([40.4397, -79.9674], 12);
-        L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/{z}/{x}/{y}.png").addTo(leafletMap);
-        
+        /*L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/{z}/{x}/{y}.png").addTo(leafletMap);
+        */
+        leafletMap.addLayer(tileLayers[currentTileLayer]);
         /*
         L.tileLayer("http://{s}.sm.mapstack.stamen.com/(watercolor,$fff[hsl-saturation@50],$ff5500[hsl-color@30]),(naip,$fff[hsl-saturation@20],mapbox-water[destination-out])[overlay]/{z}/{x}/{y}.png").addTo(leafletMap);
         */
