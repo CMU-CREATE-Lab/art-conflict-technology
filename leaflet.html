@@ -81,6 +81,10 @@
           var center = leafletMap.getCenter();        
           var latlng = [center.lat, center.lng];
           marker = L.marker(latlng, {draggable: true});
+          marker.on("contextmenu", function() {
+            console.log('rightclick');
+            leafletMap.removeLayer(marker);
+          })
           marker.addTo(leafletMap);
         }
         markers.push(marker);
