@@ -67,8 +67,9 @@
       };
 
       var markers = [];
+      var popups = [];
 
-      function addMarkerToMap(myMarker, myInfoWindow) {
+      function addMarkerToMap(myMarker, myPopup) {
         var marker;
         if (myMarker) { 
           marker = new google.maps.Marker({
@@ -82,12 +83,32 @@
           var latlng = [center.lat, center.lng];
           marker = L.marker(latlng, {draggable: true});
           marker.on("contextmenu", function() {
-            console.log('rightclick');
             leafletMap.removeLayer(marker);
           })
           marker.addTo(leafletMap);
         }
         markers.push(marker);
+
+        var i = markers.length - 1;
+
+        var contentString = '<div id="content_' + i + '" class="editable">'+
+          '<input id="input_'+i+'" type="text" title="Add content" placeholder="Add content" value=""> '+ 
+          '<input id="save_'+i+'" type="button" title="Save" value="Save">' +
+          '</div>';
+
+        var popup;
+        if (myPopup) {
+          infowindow = new google.maps.InfoWindow({
+            content: atob(myInfoWindow.content)
+          });
+        } else {
+          popup = L.popup();
+          popup.setContent(contentString);
+          marker.bindPopup(popup);
+
+        }
+        popups.push(popup);
+
       }
 
       function initGui() {
