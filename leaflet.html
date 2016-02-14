@@ -112,6 +112,11 @@
         for (var i = 0; i < markers.length; i++) {
           addMarkerToMap(markers[i], popups[i]);
         }
+        propelOptions.tileLayer = data.baseMap;
+        for (var i in gui.__controllers) {
+          gui.__controllers[i].updateDisplay();
+        }
+        setTileLayer(data.baseMap);
       }
 
 
@@ -269,18 +274,27 @@
 
       }
 
+      var setTileLayer = function(newValue) {
+        if (newValue != currentTileLayer) {
+            leafletMap.removeLayer(tileLayers[currentTileLayer]);
+            leafletMap.addLayer(tileLayers[newValue]);
+            currentTileLayer = newValue;
+        }
+      }
+
       function initGui() {
         propelOptions = new MapOptions();
         gui = new dat.GUI();
         var opts = {'Toner' : 'toner', 'Terrain': 'terrain', 'Watercolor': 'watercolor', 'Dark': 'dark'};
         var f1 = gui.add(propelOptions, 'tileLayer', opts).name('Base Map');
-        f1.onChange(function(newValue) {
+        f1.onChange(setTileLayer);
+        /*f1.onChange(function(newValue) {
           if (newValue != currentTileLayer) {
             leafletMap.removeLayer(tileLayers[currentTileLayer]);
             leafletMap.addLayer(tileLayers[newValue]);
             currentTileLayer = newValue;
           }
-        });
+        });*/
 
         var f2 = gui.add(propelOptions, 'showNeighborhoods').name('Neighborhoods');
         f2.onChange(function(newValue) {
