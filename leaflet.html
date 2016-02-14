@@ -80,6 +80,84 @@
       var markers = [];
       var popups = [];
 
+
+      function guid() {
+        return ("00000" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-5)
+      }
+
+
+      function testPost() {
+        var opts = {
+          baseMap: currentTileLayer,
+          showNeighborhoods: showNeighborhoods,
+          dataLayer: currentDataLayer,
+          markers: markers,
+          popups: popups
+        }
+        var json = jsonStringify(opts);
+        post(json, 'myapp')
+      }
+
+      function jsonStringify(opts) {
+        var baseMap = opts.baseMap || 'toner'; 
+        var showNeighborhoods = opts.showNeighborhoods ? true : false;
+        var dataLayer = opts.dataLayer || '';
+        var json_markers = [];
+        var json_popups = [];
+
+        var markers = opts.markers || [];
+        var popups = opts.popups || [];
+
+        for (var i = 0; i < markers.length; i++ ) {
+          var marker = {
+            position: {
+              lat: markers[i].getLatLng().lat,
+              lng: markers[i].getLatLng().lng           
+            },
+            map: markers[i]._map ? true : false
+          };
+
+          var popup = {
+            content: encodeURIComponent(btoa(popups[i].getContent()))
+          };
+          json_markers.push(marker);
+          json_popups.push(popup);
+        }
+        return JSON.stringify({
+          hash: hash, 
+          baseMap: baseMap,
+          showNeighborhoods: showNeighborhoods,
+          dataLayer: dataLayer,
+          markers: json_markers, 
+          popups: json_popups
+        });
+      }
+
+      function post(json, url) {
+        console.log(json);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        xhr.onload = function() {
+          console.log(xhr.responseText);
+        }
+        xhr.send('data=' + json);
+      }
+
+
+      function get(hash, url, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url + '/' + hash + '.json');
+        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        xhr.onload = function() {
+          if (callback) {
+            callback(xhr.responseText);
+          }
+        }
+        xhr.send();
+      }
+
+
       function addMarkerToMap(myMarker, myPopup) {
         var marker;
         if (myMarker) { 
@@ -181,21 +259,6 @@
         });
 
         var f4 = gui.add(propelOptions, 'addMarker').name('Add Marker');
-
-/*        var f2 = gui.addFolder('Housing Units');
-        var opts = {'': false, 'Total' : 'housing_units_color', 'Occupied': 'housing_units_occupied_color', 'Vacant': 'housing_units_vacant_color'}
-        var con = f2.add(propelOptions, 'currentCensusSelection', opts).name('Selection');
-        con.onChange(function(newValue) {
-          if (newValue != '') {
-            currentCensusColor = newValue;
-            tileLayer.redraw();
-          } else {
-            currentCensusColor = false;
-            tileLayer.redraw();            
-          }});
-
-        f2.open();
-*/
       }
 
       function initMap() {
@@ -346,6 +409,15 @@
         }
 
         function init() {
+          if (window.location.hash) {
+            hash = window.location.hash.replace("#","");
+            get(hash, 'pgh-maps', parseJson);
+          } else {
+            hash = guid();
+            window.location.hash = hash;
+            testPost();
+          }
+
           leafletMap = initMap();
           initGui();
           get('census_blocks_housing.geojson', initTiles);
