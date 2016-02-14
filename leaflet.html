@@ -84,6 +84,23 @@
       var markers = [];
       var popups = [];
 
+      var ready = {
+        'initFileLoaded': false,
+        'dataLayerLoaded': false,
+        'neighborhoodLayerLoaded': false,
+        'mapLoaded': false
+      }
+
+      function isReady(callback) {
+        var keys = Object.keys(ready);
+        var r = true;
+        for (var i = 0; i < keys.length; i++) {
+          if (!ready[keys[i]]) {
+            r = false;
+          }
+        }
+        return r;
+      }
 
       function guid() {
         return ("00000" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-5)
@@ -272,6 +289,11 @@
       function initMap() {
         var leafletMap  = L.map('map').setView([40.4397, -79.9674], 12);
         leafletMap.addLayer(tileLayers[currentTileLayer]);
+        ready['mapLoaded'] = true;
+        if (isReady()) {
+          console.log('Ready');
+        }
+
         return leafletMap;
       }
 
@@ -290,6 +312,10 @@
       function parseJson(txt) {
         var data = JSON.parse(txt);
         console.log(data);
+        ready['initFileLoaded'] = true;
+        if (isReady()) {
+          console.log('Ready');
+        }
         /*
         for (var i = 0; i < data.markers.length; i++) {
           addMarkerToMap(data.markers[i], data.popups[i]);
@@ -389,6 +415,11 @@
             }
 
           };
+          ready['dataLayerLoaded'] = true;
+          if (isReady()) {
+            console.log('Ready');
+          }
+
         }
 
         function loadGeoJSON(data) {
@@ -423,6 +454,11 @@
               // And link up the function to run when loading each feature
                 onEachFeature: onEachFeature
             });
+            ready['neighborhoodLayerLoaded'] = true;
+            if (isReady()) {
+              console.log('Ready');
+            }
+
             // Finally, add the layer to the map.
             //leafletMap.addLayer(neighborhoodsLayer);  
         }
