@@ -29,7 +29,20 @@
         width:auto !important;
         min-width: 185px;
       }
-
+      #loading {
+        background: url(default.gif) no-repeat center;
+        pointer-events: none;
+        position: absolute;
+        height: 200px;
+        width: 200px;
+        z-index: 100;
+        top: 50%;
+        left: 50%;
+        margin-left: -100px;
+        margin-top: -100px;
+        border: 5px solid #333;
+        border-radius: 200px;
+      }
 
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
@@ -98,6 +111,10 @@
           if (!ready[keys[i]]) {
             r = false;
           }
+        }
+        if (r) {
+          var el = document.getElementById('loading');
+          el.style['display'] = 'none';
         }
         return r;
       }
@@ -485,5 +502,6 @@
   </head>
   <body>
     <div id="map"></div>
+    <div id="loading"></div>
   </body>
 </html>
