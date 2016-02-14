@@ -118,6 +118,8 @@
         // Update UI
         propelOptions.tileLayer = data.baseMap;
         propelOptions.showNeighborhoods = data.showNeighborhoods;
+        propelOptions.dataLayer = data.dataLayer;
+
 
         for (var i in gui.__controllers) {
           gui.__controllers[i].updateDisplay();
@@ -128,6 +130,10 @@
 
         // Update Neighborhoods Layer
         setNeighborhoodsLayer(data.showNeighborhoods);
+
+        // Update Data Layer
+        setDataLayer(data.dataLayer);
+
       }
 
 
@@ -302,6 +308,19 @@
         showNeighborhoods = newValue;        
       }
 
+      var setDataLayer = function(newValue) {
+        if (newValue == "") {
+          leafletMap.removeLayer(tileLayer);
+          currentDataLayer = newValue;
+        } else {
+          if (currentDataLayer == "") {
+            leafletMap.addLayer(tileLayer);
+          }
+          currentDataLayer = newValue;
+          tileLayer.redraw();
+        }
+      }
+
       function initGui() {
         propelOptions = new MapOptions();
         gui = new dat.GUI();
@@ -313,7 +332,8 @@
         f2.onChange(setNeighborhoodsLayer);
         var opts = {'':'', 'Population Density' : 'popDensity'};
         var f3 = gui.add(propelOptions, 'dataLayer', opts).name('Data Layer');
-        f3.onChange(function(newValue) {
+        f3.onChange(setDataLayer);
+/*        f3.onChange(function(newValue) {
           if (newValue == "") {
             leafletMap.removeLayer(tileLayer);
                         currentDataLayer = newValue;
@@ -325,7 +345,7 @@
             currentDataLayer = newValue;
             tileLayer.redraw();
           }
-        });
+        });*/
 
         var f4 = gui.add(propelOptions, 'addMarker').name('Add Marker');
 
