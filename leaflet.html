@@ -104,6 +104,17 @@
         'mapLoaded': false
       }
 
+      var initJsonData;
+
+      function initData(data) {
+        var markers = data.markers;
+        var popups = data.popups;
+        for (var i = 0; i < markers.length; i++) {
+          addMarkerToMap(markers[i], popups[i]);
+        }
+      }
+
+
       function isReady(callback) {
         var keys = Object.keys(ready);
         var r = true;
@@ -199,12 +210,14 @@
       function addMarkerToMap(myMarker, myPopup) {
         var marker;
         if (myMarker) { 
-          marker = new google.maps.Marker({
-            map: myMarker.map ? map : null,
-            draggable: true,
-            animation: google.maps.Animation.DROP,
-            position: {lat: myMarker.position.lat, lng: myMarker.position.lng}
-          });
+          var latlng = [myMarker.position.lat, myMarker.position.lng];
+          marker = L.marker(latlng, {draggable: true});
+          marker.on("contextmenu", function() {
+            leafletMap.removeLayer(marker);
+          })
+          if (myMarker.map) {
+            marker.addTo(leafletMap);
+          } 
         } else {
           var center = leafletMap.getCenter();        
           var latlng = [center.lat, center.lng];
@@ -225,35 +238,33 @@
 
         var popup;
         if (myPopup) {
-          infowindow = new google.maps.InfoWindow({
-            content: atob(myInfoWindow.content)
-          });
-        } else {
-          popup = L.popup({},marker);
-          popup.setContent(contentString);
-          marker.bindPopup(popup);
-          marker.on('popupopen', function() {
-            var el = document.getElementById("content_" + i);
-            el.addEventListener('click', function() {
-              if (el.className == "editable") {
-                var ell = document.getElementById("save_" + i);
-                var elll = document.getElementById("input_" + i);
-
-                if (ell) {
-                  ell.addEventListener("click", function(){
-                    var contentString = '<div id="content_' + i + '" class="saved">'+
-                    elll.value +
-                    '</div>';
-                    popups[i].setContent(contentString);
-
-                  });
-                }
-              }
-            });
-
-          });
-
+            contentString = atob(myPopup.content);
         }
+        popup = L.popup({},marker);
+        popup.setContent(contentString);
+        marker.bindPopup(popup);
+        marker.on('popupopen', function() {
+          var el = document.getElementById("content_" + i);
+          el.addEventListener('click', function() {
+            if (el.className == "editable") {
+              var ell = document.getElementById("save_" + i);
+              var elll = document.getElementById("input_" + i);
+
+              if (ell) {
+                ell.addEventListener("click", function(){
+                  var contentString = '<div id="content_' + i + '" class="saved">'+
+                  elll.value +
+                  '</div>';
+                  popups[i].setContent(contentString);
+
+                });
+              }
+            }
+          });
+
+        });
+
+        
         popups.push(popup);
 
       }
@@ -309,6 +320,7 @@
         ready['mapLoaded'] = true;
         if (isReady()) {
           console.log('Ready');
+          initData(initJsonData);
         }
 
         return leafletMap;
@@ -330,8 +342,10 @@
         var data = JSON.parse(txt);
         console.log(data);
         ready['initFileLoaded'] = true;
+        initJsonData = data;
         if (isReady()) {
           console.log('Ready');
+          initData(initJsonData);
         }
         /*
         for (var i = 0; i < data.markers.length; i++) {
@@ -435,6 +449,7 @@
           ready['dataLayerLoaded'] = true;
           if (isReady()) {
             console.log('Ready');
+            initData(initJsonData);
           }
 
         }
@@ -474,6 +489,7 @@
             ready['neighborhoodLayerLoaded'] = true;
             if (isReady()) {
               console.log('Ready');
+              initData(initJsonData);
             }
 
             // Finally, add the layer to the map.
