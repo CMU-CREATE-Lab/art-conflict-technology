@@ -75,6 +75,10 @@
         this.addMarker = function() {
           addMarkerToMap();
         };
+        this.saveMap = function() {
+          testPost();
+        };
+
       };
 
       var markers = [];
@@ -145,7 +149,7 @@
       }
 
 
-      function get(hash, url, callback) {
+      function getInit(hash, url, callback) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url + '/' + hash + '.json');
         xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
@@ -240,6 +244,7 @@
           } else {
             leafletMap.removeLayer(neighborhoodsLayer);
           }
+          showNeighborhoods = newValue;
         });
 
         var opts = {'':'', 'Population Density' : 'popDensity'};
@@ -259,6 +264,9 @@
         });
 
         var f4 = gui.add(propelOptions, 'addMarker').name('Add Marker');
+
+        var f5 = gui.add(propelOptions, 'saveMap').name('Save Map');
+
       }
 
       function initMap() {
@@ -278,6 +286,17 @@
         }
         xhr.send();
       }
+
+      function parseJson(txt) {
+        var data = JSON.parse(txt);
+        console.log(data);
+        /*
+        for (var i = 0; i < data.markers.length; i++) {
+          addMarkerToMap(data.markers[i], data.popups[i]);
+        }
+        */
+      }    
+
 
       function initTiles(data) {
         censusdata = data;
@@ -411,7 +430,7 @@
         function init() {
           if (window.location.hash) {
             hash = window.location.hash.replace("#","");
-            get(hash, 'pgh-maps', parseJson);
+            getInit(hash, 'pgh-maps', parseJson);
           } else {
             hash = guid();
             window.location.hash = hash;
