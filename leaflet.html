@@ -78,7 +78,10 @@
 
       var currentDataLayer = '';
       var dataLayers = {
-        'popDensity': 'pop_density_color'
+        'popDensity': 'pop_density_color',
+        'occupancy': 'occupancy_density_color',
+        'salary': 'salary_color'
+
       }
 
       var MapOptions = function() {
@@ -330,7 +333,7 @@
 
         var f2 = gui.add(propelOptions, 'showNeighborhoods').name('Neighborhoods');
         f2.onChange(setNeighborhoodsLayer);
-        var opts = {'':'', 'Population Density' : 'popDensity'};
+        var opts = {'':'', 'Population Density' : 'popDensity', 'Occupancy': 'occupancy', 'Salary': 'salary'};
         var f3 = gui.add(propelOptions, 'dataLayer', opts).name('Data Layer');
         f3.onChange(setDataLayer);
 /*        f3.onChange(function(newValue) {
