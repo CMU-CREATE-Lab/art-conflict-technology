@@ -390,6 +390,8 @@
             leafletMap.addLayer(tileLayer);            
             el.style['display'] = 'block';
           }
+          console.log(newValue);
+          el.style['backgroundImage'] = 'url(' + newValue + '.png)';
           currentDataLayer = newValue;
           tileLayer.redraw();
         }
