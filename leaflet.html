@@ -47,6 +47,18 @@
       div.stats h4,h5 {
         margin-bottom: 2px;
       }
+      #label {
+        display:none;
+        position: absolute;
+        border: 1px solid #333;
+        bottom: -90px;
+        left: 10px;
+        width: 400px;
+        height: 150px;
+        background-image: url(income.png);
+        background-size: 400px 150px;
+        z-index: 100;
+      }
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
 
@@ -394,7 +406,7 @@
         var f6 = gui.add(propelOptions, 'showRace').name('Race');
         f6.onChange(setRaceLayer);
 
-        var opts = {'':'', 'Population Density' : 'popDensity', 'Occupancy': 'occupancy', 'Salary': 'salary'};
+        var opts = {'None':'', 'Population Density' : 'popDensity', 'Occupancy': 'occupancy', 'Salary': 'salary'};
         var f3 = gui.add(propelOptions, 'dataLayer', opts).name('Data Layer');
         f3.onChange(setDataLayer);
 
@@ -794,5 +806,6 @@
   <body>
     <div id="map"></div>
     <div id="loading"></div>
+    <div id="label"></div>
   </body>
 </html>
