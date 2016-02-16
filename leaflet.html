@@ -55,9 +55,22 @@
         left: 10px;
         width: 400px;
         height: 150px;
-        background-image: url(income.png);
+        background-image: url(salary.png);
         background-size: 400px 150px;
         z-index: 100;
+      }
+      #raceMapLabel {
+        display: none;
+        position: absolute;
+        border: 1px solid #333;
+        right: 10px;
+        top: 400px;
+        width: 224px;
+        height: 220px;
+        background-image: url(raceMap.png);
+        background-size: 224px 220px;
+        z-index: 100;
+
       }
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
@@ -376,6 +389,12 @@
 
       var setRaceLayer = function(newValue) {
         showRace = newValue;        
+        var el = document.getElementById('raceMapLabel');
+        if (showRace) {
+          el.style['display']  = 'block';
+        } else {
+          el.style['display']  = 'none';
+        }
         raceLayer.redraw();
       }
 
@@ -811,5 +830,7 @@
     <div id="map"></div>
     <div id="loading"></div>
     <div id="label"></div>
+    <div id="raceMapLabel"></div>
+
   </body>
 </html>
