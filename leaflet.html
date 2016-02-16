@@ -44,6 +44,9 @@
         border-radius: 200px;
       }
 
+      div.stats h4,h5 {
+        margin-bottom: 2px;
+      }
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
 
@@ -727,6 +730,30 @@
                 // Start by reverting the style back
                 layer.setStyle(defaultStyle); 
               });              
+             
+              layer.on("click", function (e) {
+                // Change the style to the highlighted version
+                console.log(feature);
+              });
+              
+              contentStr = "<div class=\"stats\">";
+              contentStr += "<h3>" + feature.properties['Neighborhood_2010_HOOD'] + "</h3>";
+              contentStr += "<h4>Population (2010)</h4>";
+              contentStr += "&nbsp;&nbsp;<strong>2010 Population</strong> " + feature.properties['Pop__2010'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Pop Change 00-10</strong> " + feature.properties['F__Pop__Change__00_10'] + "<br/>";
+              contentStr += "<h4>Race (2010)</h4>";
+              contentStr += "&nbsp;&nbsp;<strong>White</strong> " + feature.properties['SNAP_All_csv___White__2010_'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Black</strong> " + feature.properties['SNAP_All_csv___African_American'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Asian</strong> " + feature.properties['SNAP_All_csv___Asian__2010_'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Other</strong> " + feature.properties['SNAP_All_csv___Other__2010_'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Hispanic (of any) " + feature.properties['SNAP_All_csv___Hispanic__of_any'] +"<br/>"
+              contentStr += "<h4>Housing (2010)</h4>";
+              contentStr += "&nbsp;&nbsp;<strong>Housing Units: " + feature.properties['SNAP_All_csv_Total___Units__201'] + "</strong><br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Occupied: " + feature.properties['SNAP_All_csv___Occupied_Units__'] + "</strong><br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Vacant: " + feature.properties['SNAP_All_csv___Vacant_Units__20'] + "</strong><br/>";
+              contentStr += "</div>";
+              layer.bindPopup(contentStr);
+
             }
             neighborhoodsLayer = L.geoJson(data, {
               // And link up the function to run when loading each feature
