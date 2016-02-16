@@ -132,7 +132,6 @@
         'popDensity': 'pop_density_color',
         'occupancy': 'occupancy_density_color',
         'salary': 'salary_color'
-
       }
 
       var showRace = false;
@@ -381,12 +380,15 @@
       }
 
       var setDataLayer = function(newValue) {
+        var el = document.getElementById("label");
         if (newValue == "") {
           leafletMap.removeLayer(tileLayer);
           currentDataLayer = newValue;
+          el.style['display'] = 'none';
         } else {
           if (currentDataLayer == "") {
-            leafletMap.addLayer(tileLayer);
+            leafletMap.addLayer(tileLayer);            
+            el.style['display'] = 'block';
           }
           currentDataLayer = newValue;
           tileLayer.redraw();
