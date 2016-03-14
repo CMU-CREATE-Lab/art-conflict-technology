@@ -82,7 +82,9 @@
       var tileLayers = {
         "toner": new L.StamenTileLayer("toner", { detectRetina: true, zIndex: 0 }),
         "watercolor": new L.StamenTileLayer("watercolor", { detectRetina: true, zIndex: 0 }),
-        "dark": new L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/{z}/{x}/{y}.png", { detectRetina: true, zIndex: 0 })
+        "dark": new L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/{z}/{x}/{y}.png", { detectRetina: true, zIndex: 0 }),
+        "osm": new L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { detectRetina: true, zIndex: 0 })
+
       }
       var currentTileLayer = "toner";
 
@@ -348,7 +350,7 @@
       function initGui() {
         propelOptions = new MapOptions();
         gui = new dat.GUI();
-        var opts = {'Toner' : 'toner', 'Watercolor': 'watercolor', 'Dark': 'dark'};
+        var opts = {'Toner' : 'toner', 'Watercolor': 'watercolor', 'Dark': 'dark', 'OSM': 'osm'};
         var f1 = gui.add(propelOptions, 'tileLayer', opts).name('Base Map');
         f1.onChange(setTileLayer);
 
@@ -356,8 +358,9 @@
         f2.onChange(setPeacelinesLayer);
 
         var opts = {'None':'', 'Population Density' : 'popDensity', 'Occupancy': 'occupancy', 'Salary': 'salary'};
-        var f3 = gui.add(propelOptions, 'dataLayer', opts).name('Data Layer');
-        f3.onChange(setDataLayer);
+        // Hide data layers
+        //var f3 = gui.add(propelOptions, 'dataLayer', opts).name('Data Layer');
+        //f3.onChange(setDataLayer);
 
         var f4 = gui.add(propelOptions, 'addMarker').name('Add Marker');
 
