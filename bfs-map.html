@@ -129,7 +129,6 @@
 
       var tileLayers = {
         "toner": new L.StamenTileLayer("toner", { detectRetina: true, zIndex: 0 }),
-        "terrain": new L.StamenTileLayer("terrain", { detectRetina: true, zIndex: 0 }),
         "watercolor": new L.StamenTileLayer("watercolor", { detectRetina: true, zIndex: 0 }),
         "dark": new L.tileLayer("http://{s}.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/{z}/{x}/{y}.png", { detectRetina: true, zIndex: 0 })
       }
@@ -419,7 +418,7 @@
       function initGui() {
         propelOptions = new MapOptions();
         gui = new dat.GUI();
-        var opts = {'Toner' : 'toner', 'Terrain': 'terrain', 'Watercolor': 'watercolor', 'Dark': 'dark'};
+        var opts = {'Toner' : 'toner', 'Watercolor': 'watercolor', 'Dark': 'dark'};
         var f1 = gui.add(propelOptions, 'tileLayer', opts).name('Base Map');
         f1.onChange(setTileLayer);
 
