@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>ACT 2016 -- PIT Map</title>
+    <title>ACT 2016 -- BFS Map</title>
     <meta charset="utf-8">
     <style>
       html, body {
@@ -121,7 +121,7 @@
       var leafletMap;
       var tileLayer;
       var censusdata;
-      var citydata;
+      var peacelinedata;
 
       var gui;
       var mapOptions;
@@ -134,8 +134,8 @@
       }
       var currentTileLayer = "toner";
 
-      var showNeighborhoods = false;
-      var neighborhoodsLayer;
+      var showPeacelines = false;
+      var peacelinesLayer;
 
       var currentCensusColor = false;
 
@@ -151,7 +151,7 @@
 
       var MapOptions = function() {
         this.tileLayer = 'toner';
-        this.showNeighborhoods = false;
+        this.showPeacelines = false;
         this.dataLayer = '';
         this.showRace = false;
         this.addMarker = function() {
@@ -169,7 +169,7 @@
       var ready = {
         'initFileLoaded': false,
         'dataLayerLoaded': false,
-        'neighborhoodLayerLoaded': false,
+        'peacelinesLayerLoaded': false,
         'mapLoaded': false
       }
 
@@ -187,7 +187,7 @@
 
         // Update UI
         propelOptions.tileLayer = data.baseMap;
-        propelOptions.showNeighborhoods = data.showNeighborhoods;
+        propelOptions.showPeacelines = data.showPeacelines;
         propelOptions.showRace = data.showRace;
 
         propelOptions.dataLayer = data.dataLayer;
@@ -200,8 +200,8 @@
         // Update TileLayer
         setTileLayer(data.baseMap);
 
-        // Update Neighborhoods Layer
-        setNeighborhoodsLayer(data.showNeighborhoods);
+        // Update Peacelines Layer
+        setPeacelinesLayer(data.showPeacelines);
 
         //
         setRaceLayer(data.showRace);
@@ -235,7 +235,7 @@
       function testPost() {
         var opts = {
           baseMap: currentTileLayer,
-          showNeighborhoods: showNeighborhoods,
+          showPeacelines: showPeacelines,
           showRace: showRace,
           dataLayer: currentDataLayer,
           markers: markers,
@@ -247,7 +247,7 @@
 
       function jsonStringify(opts) {
         var baseMap = opts.baseMap || 'toner'; 
-        var showNeighborhoods = opts.showNeighborhoods ? true : false;
+        var showPeacelines = opts.showPeacelines ? true : false;
         var showRace = opts.showRace ? true : false;
         var dataLayer = opts.dataLayer || '';
         var json_markers = [];
@@ -274,7 +274,7 @@
         return JSON.stringify({
           hash: hash, 
           baseMap: baseMap,
-          showNeighborhoods: showNeighborhoods,
+          showPeacelines: showPeacelines,
           showRace: showRace,
           dataLayer: dataLayer,
           markers: json_markers, 
@@ -377,13 +377,13 @@
         }
       }
 
-      var setNeighborhoodsLayer = function(newValue) {
+      var setPeacelinesLayer = function(newValue) {
         if (newValue) {
-          leafletMap.addLayer(neighborhoodsLayer);
+          leafletMap.addLayer(peacelinesLayer);
         } else {
-          leafletMap.removeLayer(neighborhoodsLayer);
+          leafletMap.removeLayer(peacelinesLayer);
         }
-        showNeighborhoods = newValue;        
+        showPeacelines = newValue;        
       }
 
       var setRaceLayer = function(newValue) {
@@ -422,8 +422,8 @@
         var f1 = gui.add(propelOptions, 'tileLayer', opts).name('Base Map');
         f1.onChange(setTileLayer);
 
-        var f2 = gui.add(propelOptions, 'showNeighborhoods').name('Neighborhoods');
-        f2.onChange(setNeighborhoodsLayer);
+        var f2 = gui.add(propelOptions, 'showPeacelines').name('Peacelines');
+        f2.onChange(setPeacelinesLayer);
 
         var f6 = gui.add(propelOptions, 'showRace').name('Race');
         f6.onChange(setRaceLayer);
@@ -738,20 +738,20 @@
         }
 
         function loadGeoJSON(data) {
-          citydata = data;
+          peacelinedata = data;
             // Set a default style for out the polygons will appear
             var defaultStyle = {
-                color: "#333333",
+                color: "#ff0000",
                 weight: 2,
-                opacity: 0.2,
-                fillOpacity: 0.0,
-                fillColor: "#999999"
+                opacity: 1.0,
+                fillOpacity: 1.0,
+                fillColor: "#ff0000"
             };
             var highlightStyle = {
-                color: '#333333', 
+                color: '#ff0000', 
                 weight: 6,
-                opacity: 0.8,
-                fillOpacity: 0.15,
+                opacity: 1.0,
+                fillOpacity: 1.0,
                 fillColor: '#999999'
             };       
             var onEachFeature = function (feature, layer) {
@@ -771,37 +771,23 @@
               });
               
               contentStr = "<div class=\"stats\">";
-              contentStr += "<h3>" + feature.properties['Neighborhood_2010_HOOD'] + "</h3>";
-              contentStr += "<h4>Population (2010)</h4>";
-              contentStr += "&nbsp;&nbsp;<strong>2010 Population</strong> " + feature.properties['Pop__2010'] + "<br/>";
-              contentStr += "&nbsp;&nbsp;<strong>Pop Change 00-10</strong> " + feature.properties['F__Pop__Change__00_10'] + "<br/>";
-              contentStr += "<h4>Race (2010)</h4>";
-              contentStr += "&nbsp;&nbsp;<strong>White</strong> " + feature.properties['SNAP_All_csv___White__2010_'] + "<br/>";
-              contentStr += "&nbsp;&nbsp;<strong>Black</strong> " + feature.properties['SNAP_All_csv___African_American'] + "<br/>";
-              contentStr += "&nbsp;&nbsp;<strong>Asian</strong> " + feature.properties['SNAP_All_csv___Asian__2010_'] + "<br/>";
-              contentStr += "&nbsp;&nbsp;<strong>Other</strong> " + feature.properties['SNAP_All_csv___Other__2010_'] + "<br/>";
-              contentStr += "&nbsp;&nbsp;<strong>Hispanic (of any) " + feature.properties['SNAP_All_csv___Hispanic__of_any'] +"<br/>"
-              contentStr += "<h4>Housing (2010)</h4>";
-              contentStr += "&nbsp;&nbsp;<strong>Housing Units: " + feature.properties['SNAP_All_csv_Total___Units__201'] + "</strong><br/>";
-              contentStr += "&nbsp;&nbsp;<strong>Occupied: " + feature.properties['SNAP_All_csv___Occupied_Units__'] + "</strong><br/>";
-              contentStr += "&nbsp;&nbsp;<strong>Vacant: " + feature.properties['SNAP_All_csv___Vacant_Units__20'] + "</strong><br/>";
+              contentStr += "<h3>" + feature.properties['PEACELINE'] + "</h3>";
+
               contentStr += "</div>";
               layer.bindPopup(contentStr);
 
             }
-            neighborhoodsLayer = L.geoJson(data, {
+            peacelinesLayer = L.geoJson(data, {
               // And link up the function to run when loading each feature
                 onEachFeature: onEachFeature,
                 zIndex: 10
             });
-            ready['neighborhoodLayerLoaded'] = true;
+            ready['peacelinesLayerLoaded'] = true;
             if (isReady()) {
               console.log('Ready');
               initData(initJsonData);
             }
 
-            // Finally, add the layer to the map.
-            //leafletMap.addLayer(neighborhoodsLayer);  
         }
 
         function init() {
@@ -818,7 +804,8 @@
           leafletMap = initMap();
           initGui();
           get('census_blocks_housing.geojson', initTiles);
-          get('Neighborhoods_with_SNAP_Data.geojson', loadGeoJSON);
+          get('peacelines.geojson', loadGeoJSON);
+
           initRacialDotMap(race_data);
         }
         document.addEventListener('DOMContentLoaded', init, false);
