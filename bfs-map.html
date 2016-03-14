@@ -89,7 +89,7 @@
         "osm": new L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { detectRetina: true, zIndex: 0 })
 
       }
-      var currentTileLayer = "toner";
+      var currentTileLayer = "osm";
 
       var showPeacelines = false;
       var peacelinesLayer;
@@ -104,7 +104,7 @@
       }
 
       var MapOptions = function() {
-        this.tileLayer = 'toner';
+        this.tileLayer = 'osm';
         this.showPeacelines = false;
         this.dataLayer = '';
         this.addMarker = function() {
