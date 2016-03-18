@@ -72,8 +72,12 @@
     <script type="text/javascript" src="dat.gui.min.js"></script>
     <script id="vshader" type="x-shader/x-vertex">
         uniform mat4 u_matrix;
+        uniform float u_min_date;
+        uniform float u_max_date;
+
         attribute vec4 a_vertex;
         attribute float a_pointSize;
+        attribute float a_date;
         attribute vec4 a_color;
         varying vec4 v_color;
 
@@ -82,8 +86,11 @@
         gl_PointSize =  a_pointSize;
 
         // multiply each vertex by a matrix.
-        gl_Position = u_matrix * a_vertex;
-
+        if (a_date < u_min_date || a_date > u_max_date) {
+          gl_Position = vec4(-1,-1,-1,-1);
+        } else {
+          gl_Position = u_matrix * a_vertex;
+        }
 
         // pass the color to the fragment shader
         v_color = a_color;
@@ -129,7 +136,9 @@
 
       var showVictims = false;
       var victimsLayer;
-
+      var minYear = 1969;
+      var maxYear = 2001;
+      
       var currentCensusColor = false;
 
       var currentDataLayer = '';
@@ -143,6 +152,9 @@
         this.tileLayer = 'osm';
         this.showPeacelines = false;
         this.showVictims = false;
+        this.minYear = 1969;
+        this.maxYear = 2001;
+
         this.dataLayer = '';
         this.addMarker = function() {
           addMarkerToMap();
@@ -183,10 +195,18 @@
 
         propelOptions.dataLayer = data.dataLayer;
 
-
         for (var i in gui.__controllers) {
           gui.__controllers[i].updateDisplay();
         }
+
+        var keys = Object.keys(gui.__folders);
+        console.log(keys)
+        for (var j = 0; j < keys.length; j++) {
+         for (var i = 0; i < gui.__folders[keys[j]].__controllers.length; i++) {
+            gui.__folders[keys[j]].__controllers[i].updateDisplay();
+          }
+        }
+        
 
         // Update TileLayer
         setTileLayer(data.baseMap);
@@ -382,6 +402,16 @@
         victimsLayer.redraw();
       }
 
+      var setMinYear = function(newValue) {
+        minYear = newValue;        
+        victimsLayer.redraw();
+      }
+
+      var setMaxYear = function(newValue) {
+        maxYear = newValue;        
+        victimsLayer.redraw();
+      }
+
       var setDataLayer = function(newValue) {
         var el = document.getElementById("label");
         if (newValue == "") {
@@ -410,13 +440,18 @@
         var f2 = gui.add(propelOptions, 'showPeacelines').name('Peacelines');
         f2.onChange(setPeacelinesLayer);
 
-        var f6 = gui.add(propelOptions, 'showVictims').name('Victims');
-        f6.onChange(setVictimsLayer);
+        //var f6 = gui.add(propelOptions, 'showVictims').name('Victims');
+        //f6.onChange(setVictimsLayer);
 
-        var opts = {'None':'', 'Population Density' : 'popDensity', 'Occupancy': 'occupancy', 'Salary': 'salary'};
-        // Hide data layers
-        //var f3 = gui.add(propelOptions, 'dataLayer', opts).name('Data Layer');
-        //f3.onChange(setDataLayer);
+        var f6 = gui.addFolder('Victims')
+        var f7 = f6.add(propelOptions, 'showVictims').name('Victims');
+        f7.onChange(setVictimsLayer);
+        var f8 = f6.add(propelOptions, 'minYear', 1969, 2001).name('Min Year');
+        f8.onChange(setMinYear);
+        var f9 = f6.add(propelOptions, 'maxYear', 1969, 2001).name('Max Year');
+        f9.onChange(setMaxYear);
+ 
+        f6.open();
 
         var f4 = gui.add(propelOptions, 'addMarker').name('Add Marker');
 
@@ -601,6 +636,8 @@
           var u_matLoc = gl.getUniformLocation(program, "u_matrix");
           var colorLoc = gl.getAttribLocation(program, "a_color");
           var vertLoc = gl.getAttribLocation(program, "a_vertex");
+          var dateLoc = gl.getAttribLocation(program, "a_date");
+
           gl.aPointSize = gl.getAttribLocation(program, "a_pointSize");
           // Set the matrix to some that makes 1 unit 1 pixel.
 
@@ -616,24 +653,35 @@
               pixel = LatLongToPixelXY(data.features[i].geometry.coordinates[1], data.features[i].geometry.coordinates[0]);
               //var rgb = data.features[i].properties.race_color.split(",")
               var rgb = [209, 56, 17];
-              verts.push(pixel.x, pixel.y, parseInt(rgb[0])/255, parseInt(rgb[1])/255, parseInt(rgb[2])/255);
+              var date = new Date(data.features[i]['properties']['death']).getTime();
+              console.log(date);
+              verts.push(pixel.x, pixel.y, parseInt(rgb[0])/255, parseInt(rgb[1])/255, parseInt(rgb[2])/255, date);
 
           }
-          console.log(verts);
+
+          var timeLoc = gl.getUniformLocation(program, 'u_min_date');
+          gl.uniform1f(timeLoc, new Date(minYear,1,1).getTime());
+ 
+          var timeLoc = gl.getUniformLocation(program, 'u_max_date');
+          gl.uniform1f(timeLoc, new Date(maxYear,12,31).getTime());
+ 
 
           var numPoints = data.features.length ;
-          console.log(numPoints);
           var vertBuffer = gl.createBuffer();
           var vertArray = new Float32Array(verts);
           var fsize = vertArray.BYTES_PER_ELEMENT;
 
           gl.bindBuffer(gl.ARRAY_BUFFER, vertBuffer);
           gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-          gl.vertexAttribPointer(vertLoc, 2, gl.FLOAT, false,fsize*5,0);
+          gl.vertexAttribPointer(vertLoc, 2, gl.FLOAT, false, fsize*6, 0);
           gl.enableVertexAttribArray(vertLoc);
           // -- offset for color buffer
-          gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, fsize*5, fsize*2);
+          gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, fsize*6, fsize*2);
           gl.enableVertexAttribArray(colorLoc);
+
+          gl.vertexAttribPointer(dateLoc, 1, gl.FLOAT, false, fsize*6, fsize*5);
+          gl.enableVertexAttribArray(dateLoc);
+
 
           victimsLayer.redraw();
 
@@ -671,6 +719,13 @@
 
               // -- attach matrix value to 'mapMatrix' uniform in shader
               gl.uniformMatrix4fv(u_matLoc, false, mapMatrix);
+
+                        var timeLoc = gl.getUniformLocation(program, 'u_min_date');
+          gl.uniform1f(timeLoc, new Date(minYear,1,1).getTime());
+ 
+          var timeLoc = gl.getUniformLocation(program, 'u_max_date');
+          gl.uniform1f(timeLoc, new Date(maxYear,12,31).getTime());
+
               if (showVictims) {
                 gl.drawArrays(gl.POINTS, 0, numPoints);
               }
