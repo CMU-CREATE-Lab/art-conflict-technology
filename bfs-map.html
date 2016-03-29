@@ -138,6 +138,8 @@
       var victimsLayer;
       var minYear = 1969;
       var maxYear = 2001;
+
+      var currentDate = new Date(maxYear, 12, 31).getTime();
       
       var currentCensusColor = false;
 
@@ -154,6 +156,7 @@
         this.showVictims = false;
         this.minYear = 1969;
         this.maxYear = 2001;
+        this.animate = false;
 
         this.dataLayer = '';
         this.addMarker = function() {
@@ -412,6 +415,15 @@
         victimsLayer.redraw();
       }
 
+      var setAnimate = function(newValue) {
+        if (newValue) {
+          console.log('start animation');
+          window.requestAnimationFrame(step);
+        } else {
+          console.log('stop animation');
+        }      
+      }
+
       var setDataLayer = function(newValue) {
         var el = document.getElementById("label");
         if (newValue == "") {
@@ -446,6 +458,10 @@
         var f6 = gui.addFolder('Victims')
         var f7 = f6.add(propelOptions, 'showVictims').name('Victims');
         f7.onChange(setVictimsLayer);
+
+        var f10 = f6.add(propelOptions, 'animate').name('Animate');
+        f10.onChange(setAnimate);
+
         var f8 = f6.add(propelOptions, 'minYear', 1969, 2001).name('Min Year');
         f8.onChange(setMinYear);
         var f9 = f6.add(propelOptions, 'maxYear', 1969, 2001).name('Max Year');
@@ -493,6 +509,28 @@
           initData(initJsonData);
         }
       }    
+
+
+      var start;
+      function step(timestamp) {
+        if (!start) start = timestamp;
+        var progress = timestamp - start;
+        var range = new Date(propelOptions.maxYear, 12, 31).getTime() - new Date(propelOptions.minYear, 1,1).getTime();
+        if (propelOptions.animate) {
+          if (progress < 5000) {
+            console.log(progress);
+            currentDate = ((progress/5000) * range) + new Date(propelOptions.minYear, 1,1).getTime();
+            victimsLayer.redraw();
+            window.requestAnimationFrame(step);
+
+          } else {
+            console.log('restarting');
+            start = null;
+            window.requestAnimationFrame(step);
+
+          }
+        }
+      }
 
 
       function initTiles(data) {
@@ -720,12 +758,15 @@
               // -- attach matrix value to 'mapMatrix' uniform in shader
               gl.uniformMatrix4fv(u_matLoc, false, mapMatrix);
 
-                        var timeLoc = gl.getUniformLocation(program, 'u_min_date');
-          gl.uniform1f(timeLoc, new Date(minYear,1,1).getTime());
+              var timeLoc = gl.getUniformLocation(program, 'u_min_date');
+              gl.uniform1f(timeLoc, new Date(minYear,1,1).getTime());
  
-          var timeLoc = gl.getUniformLocation(program, 'u_max_date');
-          gl.uniform1f(timeLoc, new Date(maxYear,12,31).getTime());
-
+              var timeLoc = gl.getUniformLocation(program, 'u_max_date');
+              if (propelOptions.animate) {
+                gl.uniform1f(timeLoc, currentDate);
+              } else {
+                gl.uniform1f(timeLoc, new Date(maxYear,12,31).getTime());
+              }
               if (showVictims) {
                 gl.drawArrays(gl.POINTS, 0, numPoints);
               }
