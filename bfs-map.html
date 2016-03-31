@@ -59,6 +59,31 @@
         background-size: 400px 150px;
         z-index: 100;
       }
+
+      .info {
+          padding: 6px 8px;
+          font: 14px/16px Arial, Helvetica, sans-serif;
+          background: white;
+          background: rgba(255,255,255,0.8);
+          box-shadow: 0 0 15px rgba(0,0,0,0.2);
+          border-radius: 5px;
+      }
+      .info h4 {
+          margin: 0 0 5px;
+          color: #777;
+      }      
+
+      .legend {
+          line-height: 18px;
+          color: #555;
+      }
+      .legend i {
+          width: 18px;
+          height: 18px;
+          float: left;
+          margin-right: 8px;
+          opacity: 0.95;
+      }      
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
     <link rel="stylesheet" href="Control.Geocoder.css" />
@@ -203,7 +228,6 @@
         }
 
         var keys = Object.keys(gui.__folders);
-        console.log(keys)
         for (var j = 0; j < keys.length; j++) {
          for (var i = 0; i < gui.__folders[keys[j]].__controllers.length; i++) {
             gui.__folders[keys[j]].__controllers[i].updateDisplay();
@@ -425,21 +449,40 @@
       }
 
       var setDataLayer = function(newValue) {
-        var el = document.getElementById("label");
         if (newValue == "") {
           leafletMap.removeLayer(tileLayer);
           currentDataLayer = newValue;
-          el.style['display'] = 'none';
         } else {
+          setLegend();
           if (currentDataLayer == "") {
             leafletMap.addLayer(tileLayer);            
-            el.style['display'] = 'block';
           }
           console.log(newValue);
-          el.style['backgroundImage'] = 'url(' + newValue + '.png)';
           currentDataLayer = newValue;
           tileLayer.redraw();
         }
+      }
+
+      var legend;
+      var setLegend = function() {
+        legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9],
+                labels = [];
+
+            div.innerHTML += "<h4>Percentage of Catholics</h4>";
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i]) + '"></i> ' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            }
+            return div;
+        };
+
+
+        legend.addTo(leafletMap);
       }
 
       function initGui() {
@@ -532,6 +575,18 @@
         }
       }
 
+        function getColor(d) {
+          return d < .1 ? '#ffffe0' :
+                 d < .2 ? '#ffe3af' :
+                 d < .3 ? '#ffc58a' :
+                 d < .4 ? '#ffa474' :
+                 d < .5 ? '#fa8266' :
+                 d < .6 ? '#ed645c' :
+                 d < .7 ? '#db4551' : 
+                 d < .8 ? '#c52940' :
+                 d < .9 ? '#aa0e27' :
+                          '#8b0000';
+        }
 
       function initTiles(data) {
         censusdata = data;
@@ -550,6 +605,8 @@
           var counter = 0;
           for (var i = 0; i < data.features.length; i++) {
             data.features[i].properties.color = 'hsl(' + 360 * Math.random() + ', 50%, 50%)';
+            data.features[i].properties.color = getColor(data.features[i].properties['catholic']/data.features[i].properties['totpop']);
+
             counter += data.features[i].geometry.coordinates[0].length;
           }
           return counter;
@@ -557,13 +614,13 @@
 
         var tileIndex = geojsonvt(data, tileOptions);
 
-        //colorizeFeatures(data);
+        colorizeFeatures(data);
 
         tileLayer = L.canvasTiles().params({ debug: false, padding: 5, zIndex:1 }).drawing(drawingOnCanvas);
 
         var pad = 0;
 
-        //tileLayer.addTo(leafletMap);
+        tileLayer.addTo(leafletMap);
 
 
         function drawingOnCanvas(canvasOverlay, params) {
@@ -574,7 +631,6 @@
           ctx.globalCompositeOperation = 'source-over';
 
 
-          console.log('getting tile z' + params.tilePoint.z + '-' + params.tilePoint.x + '-' + params.tilePoint.y);
 
           var tile = tileIndex.getTile(params.tilePoint.z, params.tilePoint.x, params.tilePoint.y);
           if (!tile) {
@@ -592,12 +648,11 @@
           for (var i = 0; i < features.length; i++) {
             var feature = features[i],
             type = feature.type;
-
             //ctx.fillStyle = feature.tags.color ? feature.tags.color : 'rgba(255,0,0,0.05)';
             //ctx.fillStyle = currentCensusColor ? feature.tags[currentCensusColor] : 'rgba(0,0,255,0.05)';
             //ctx.fillStyle = currentCensusColor ? feature.tags[currentCensusColor] : feature.tags.per_block_vacancy_color //feature.tags.pop_density_color;
             ctx.fillStyle = currentDataLayer ? feature.tags[dataLayers[currentDataLayer]] : 'rgba(185,15,45,0.05)';
-
+            ctx.fillStyle = feature.tags.color;
             ctx.beginPath();
 
 
@@ -692,7 +747,6 @@
               //var rgb = data.features[i].properties.race_color.split(",")
               var rgb = [209, 56, 17];
               var date = new Date(data.features[i]['properties']['death']).getTime();
-              console.log(date);
               verts.push(pixel.x, pixel.y, parseInt(rgb[0])/255, parseInt(rgb[1])/255, parseInt(rgb[2])/255, date);
 
           }
@@ -897,7 +951,8 @@
               ]).addTo(leafletMap);
           };
           initGui();
-          get('census_blocks_housing.geojson', initTiles);
+          //get('census_blocks_housing.geojson', initTiles);
+          get('nireland_sa_2011_w_uv_stats.geojson', initTiles);
           get('peacelines.geojson', loadGeoJSON);
           get('genxml_victims.geojson', initVictims);
 
@@ -909,7 +964,5 @@
   <body>
     <div id="map"></div>
     <div id="loading"></div>
-    <div id="label"></div>
-
   </body>
 </html>
