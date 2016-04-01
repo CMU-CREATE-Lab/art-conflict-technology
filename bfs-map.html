@@ -170,9 +170,7 @@
 
       var currentDataLayer = '';
       var dataLayers = {
-        'popDensity': 'pop_density_color',
-        'occupancy': 'occupancy_density_color',
-        'salary': 'salary_color'
+        'catholicDensity': 'catholic_density_color'
       }
 
       var MapOptions = function() {
@@ -451,6 +449,7 @@
       var setDataLayer = function(newValue) {
         if (newValue == "") {
           leafletMap.removeLayer(tileLayer);
+          //leafletMap.removeControl(legend);
           currentDataLayer = newValue;
         } else {
           setLegend();
@@ -494,6 +493,10 @@
 
         var f2 = gui.add(propelOptions, 'showPeacelines').name('Peacelines');
         f2.onChange(setPeacelinesLayer);
+
+        var opts = {'None':'', '2011 Catholic Density' : 'catholicDensity'};
+        var f3 = gui.add(propelOptions, 'dataLayer', opts).name('Data Layer');
+        f3.onChange(setDataLayer);
 
         //var f6 = gui.add(propelOptions, 'showVictims').name('Victims');
         //f6.onChange(setVictimsLayer);
