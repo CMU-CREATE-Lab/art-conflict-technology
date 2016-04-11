@@ -161,6 +161,7 @@
 
       var showVictims = false;
       var victimsLayer;
+      var animate = false;
       var minYear = 1969;
       var maxYear = 2001;
 
@@ -218,6 +219,9 @@
         propelOptions.tileLayer = data.baseMap;
         propelOptions.showPeacelines = data.showPeacelines;
         propelOptions.showVictims = data.showVictims;
+        propelOptions.animate = data.animate;
+        propelOptions.minYear = data.minYear || 1969;
+        propelOptions.maxYear = data.maxYear || 2001;
 
         propelOptions.dataLayer = data.dataLayer;
 
@@ -241,6 +245,9 @@
 
         // Update Peacelines Layer
         setVictimsLayer(data.showVictims);
+        setAnimate(data.animate);
+        setMinYear(data.minYear);
+        setMaxYear(data.maxYear);
 
         // Update Data Layer
         setDataLayer(data.dataLayer);
@@ -273,6 +280,9 @@
           baseMap: currentTileLayer,
           showPeacelines: showPeacelines,
           showVictims: showVictims,
+          animate: animate,
+          minYear: minYear,
+          maxYear: maxYear,
           dataLayer: currentDataLayer,
           markers: markers,
           popups: popups
@@ -285,6 +295,10 @@
         var baseMap = opts.baseMap || 'toner'; 
         var showPeacelines = opts.showPeacelines ? true : false;
         var showVictims = opts.showVictims ? true : false;
+        var animate = opts.animate ? true : false;
+        var minYear = opts.minYear || 1969;
+        var maxYear = opts.maxYear || 2001;
+
         var dataLayer = opts.dataLayer || '';
         var json_markers = [];
         var json_popups = [];
@@ -312,6 +326,9 @@
           baseMap: baseMap,
           showPeacelines: showPeacelines,
           showVictims: showVictims,
+          animate: animate,
+          minYear: minYear,
+          maxYear: maxYear,
           dataLayer: dataLayer,
           markers: json_markers, 
           popups: json_popups
@@ -438,6 +455,7 @@
       }
 
       var setAnimate = function(newValue) {
+        animate = newValue;
         if (newValue) {
           console.log('start animation');
           window.requestAnimationFrame(step);
@@ -564,7 +582,6 @@
         var range = new Date(propelOptions.maxYear, 12, 31).getTime() - new Date(propelOptions.minYear, 1,1).getTime();
         if (propelOptions.animate) {
           if (progress < 5000) {
-            console.log(progress);
             currentDate = ((progress/5000) * range) + new Date(propelOptions.minYear, 1,1).getTime();
             victimsLayer.redraw();
             window.requestAnimationFrame(step);
