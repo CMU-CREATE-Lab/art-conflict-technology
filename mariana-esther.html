@@ -84,7 +84,22 @@
           margin-right: 8px;
           opacity: 0.95;
       }      
+      .controls {
+        bottom: 150px !important;
+      }
+      .captureTime {
+        bottom: 192px !important;        
+      } 
+      #pin-slider {
+        position: absolute;
+        bottom: 0px;
+        left: 0Px;
+        height: 150px;
+        width: 100%;
+        background-color: rgba(0,0,0,.5);
+      }
     </style>
+
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
     <link rel="stylesheet" href="Control.Geocoder.css" />
     <link href="mariana-esther/css/jquery-ui/smoothness/jquery-ui.custom.css" media="screen" rel="stylesheet" type="text/css" />
@@ -1033,6 +1048,6 @@ Date.prototype.yyyymmdd = function(stepsize) {
     <div id="map"></div>
     <div id="loading"></div>
     <div id="time-slider-controls"></div>
-
+    <div id="pin-slider"></div>
   </body>
 </html>
