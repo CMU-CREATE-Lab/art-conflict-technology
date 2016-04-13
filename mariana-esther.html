@@ -98,6 +98,14 @@
         width: 100%;
         background-color: rgba(0,0,0,.5);
       }
+
+      div.interestPoint label {
+        display: block;
+        float: left;
+        width: 150px;
+      }
+
+
     </style>
 
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
@@ -144,6 +152,8 @@
       var MapOptions = function() {
         this.tileLayer = 'mapBox';
 
+        this.mode = 'edit';
+
         this.addMarker = function() {
           addMarkerToMap();
         };
@@ -155,6 +165,7 @@
 
       var markers = [];
       var popups = [];
+      var interestPoints = [];
 
       var ready = {
         'initFileLoaded': false,
@@ -165,6 +176,45 @@
 
       var timeSlider;
       var animate = false;
+
+      var mode = "edit";
+
+      var InterestPoint = function() {
+        this.title = '';
+        this.description = '';
+        this.embedUrl = '';
+        this.thumbnailUrl = '';
+        this.year = '';
+        this.order = '';
+      }
+
+      InterestPoint.prototype.toInput = function(key) {
+        var p = document.createElement("p");
+        var label = document.createElement("label");
+        label["for"] = key;
+        label.textContent = key;
+        var input = document.createElement("input");
+        input["type"] = "text";
+        input["id"] = key;
+        input["value"] = this[key];
+        p.appendChild(label);
+        p.appendChild(input);
+        return p;
+      }
+
+      InterestPoint.prototype.toForm = function(i) {
+        console.log('toForm(' + i + ')');
+        var form = document.createElement("div");
+        form["className"] = "interestPoint";
+        form["id"] = 'input_' + i;
+        form.appendChild(this.toInput('title'));
+        form.appendChild(this.toInput('description'));
+        form.appendChild(this.toInput('embedUrl'));
+        form.appendChild(this.toInput('thumbnailUrl'));
+        form.appendChild(this.toInput('year'));
+        form.appendChild(this.toInput('order'));
+        return form;
+      }
 
       Date.prototype.yyyy = function(stepsize) {
         if (stepsize == undefined) stepsize = -1;
@@ -288,9 +338,10 @@
         xhr.send();
       }
 
-
       function addMarkerToMap(myMarker, myPopup) {
         var marker;
+        var interestPoint;
+
         if (myMarker) { 
           var latlng = [myMarker.position.lat, myMarker.position.lng];
           marker = L.marker(latlng, {draggable: true});
@@ -308,45 +359,68 @@
             leafletMap.removeLayer(marker);
           })
           marker.addTo(leafletMap);
+          interestPoint = new InterestPoint();
         }
+
         markers.push(marker);
+        interestPoints.push(interestPoint); 
 
         var i = markers.length - 1;
-
-        var contentString = '<div id="content_' + i + '" class="editable">'+
-          '<input id="input_'+i+'" type="text" title="Add content" placeholder="Add content" value=""> '+ 
-          '<input id="save_'+i+'" type="button" title="Save" value="Save">' +
-          '</div>';
 
         var popup;
         if (myPopup) {
             contentString = atob(myPopup.content);
         }
         popup = L.popup({},marker);
-        popup.setContent(contentString);
         marker.bindPopup(popup);
+
         marker.on('popupopen', function() {
-          var el = document.getElementById("content_" + i);
-          el.addEventListener('click', function() {
-            if (el.className == "editable") {
-              var ell = document.getElementById("save_" + i);
-              var elll = document.getElementById("input_" + i);
+          if (mode == "edit") {
+            var div = document.createElement("div");
+            div["id"] = "content_" + i;
+            div["className"] = "editable";
+            div.appendChild(interestPoints[i].toForm(i));
+            var input = document.createElement("input");
+            input["id"] = "save_" + i;
+            input["type"] = "button";
+            input["title"] = "save";
+            input["value"] = "Save";
+            div.appendChild(input);
+                      
+            popups[i].setContent(div);
 
-              if (ell) {
-                ell.addEventListener("click", function(){
-                  var contentString = '<div id="content_' + i + '" class="saved">'+
-                  elll.value +
-                  '</div>';
-                  popups[i].setContent(contentString);
+            var el = document.getElementById("content_" + i);
+            el.addEventListener('click', function() {
+              if (el.className == "editable") {
+                var ell = document.getElementById("save_" + i);
+                var elll = document.getElementById("input_" + i);
 
-                });
+                if (ell) {
+                  ell.addEventListener("click", function(){
+                    var inputs = elll.getElementsByTagName("input");
+                    var keys = Object.keys(interestPoint);
+                    for (var j = 0; j < keys.length; j++) {
+                      interestPoint[keys[j]] = inputs[keys[j]].value;
+                    }
+
+                  });
+                }
               }
-            }
-          });
+            });
+
+          } else {
+            console.log("display share view");
+            var contentString = '<div id="content_' + i + '" class="saved">'+
+                  interestPoints[i]['embedUrl'] +
+                  '</div>';
+            popups[i].setContent(contentString);
+
+
+          }
+
+
 
         });
-
-        
         popups.push(popup);
 
       }
@@ -360,12 +434,22 @@
       }
 
 
+      var setMode = function(newValue) {
+        if (newValue != mode) {
+          mode = newValue;
+        }
+      }
+
       function initGui() {
         propelOptions = new MapOptions();
         gui = new dat.GUI();
         var opts = {'Toner' : 'toner', 'Watercolor': 'watercolor', 'Dark': 'dark', 'OSM': 'osm', 'mapBox': 'mapBox'};
         var f1 = gui.add(propelOptions, 'tileLayer', opts).name('Base Map');
         f1.onChange(setTileLayer);
+
+        var opts = {'edit' : 'edit', 'share': 'share'};
+        var f2 = gui.add(propelOptions, 'mode', opts).name('Mode');
+        f2.onChange(setMode);
 
         var f4 = gui.add(propelOptions, 'addMarker').name('Add Marker');
 
@@ -374,7 +458,7 @@
       }
 
       function initMap() {
-        var leafletMap  = L.map('map').setView([54.5975, -5.9226], 12); // Init the default view
+        var leafletMap  = L.map('map').setView([38.3416, -60.7763], 4); // Init the default view
         leafletMap.addLayer(tileLayers[currentTileLayer]);
         ready['mapLoaded'] = true;
         if (isReady()) {
