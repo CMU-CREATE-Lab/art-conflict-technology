@@ -74,6 +74,8 @@
       }      
 
       .legend {
+          width: 250px;
+          heigth: auto;
           line-height: 18px;
           color: #555;
       }
@@ -96,7 +98,6 @@
         left: 0Px;
         height: 150px;
         width: 100%;
-        background-color: rgba(0,0,0,.5);
       }
 
       div.interestPoint label {
@@ -105,6 +106,61 @@
         width: 150px;
       }
 
+      /* Example wrapper */
+      .wrap {
+        position: relative;
+        margin: 0;
+      }
+
+      /* Frame */
+      .frame {
+        height: 130px;
+        line-height: 130px;
+        overflow: hidden;
+      }
+      .frame ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-size: 50px;
+      }
+      .frame ul li {
+        float: left;
+        width: 160px;
+        height: 100%;
+        margin: 0 1px 0 0;
+        padding: 0;
+        background: #333;
+        color: #ddd;
+        text-align: center;
+        cursor: pointer;
+      }
+      .frame ul li.active {
+        color: #fff;
+        background: #a03232;
+      }
+
+      /* Scrollbar */
+      .scrollbar {
+        margin: 0 0 0.5em 0;
+        height: 10px;
+        background: #ccc;
+        line-height: 0;
+      }
+      .scrollbar .handle {
+        width: 100px;
+        height: 100%;
+        background: red;
+        cursor: pointer;
+      }
+      .scrollbar .handle .mousearea {
+        position: absolute;
+        top: -9px;
+        left: 0;
+        width: 100%;
+        height: 20px;
+      }
 
     </style>
 
@@ -122,6 +178,7 @@
     <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
     <script src="L.CanvasOverlay.js"></script>
     <script type="text/javascript" src="dat.gui.min.js"></script>
+    <script type="text/javascript" src="sly.min.js"></script>
     <script>
 
       var leafletMap;
@@ -179,13 +236,35 @@
 
       var mode = "edit";
 
+      var slyOptions = {
+
+      };
+      var frame;
+      var wrap;
+
+      var legend;
+      var setLegend = function(i) {
+        legend = L.control({position: 'topleft'});
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML += "<h4>" + interestPoints[i]['title'] + "</h4>";
+            div.innerHTML += interestPoints[i]['description'];
+            return div;
+        };
+
+
+        legend.addTo(leafletMap);
+      }
+
+      var removeLegend = function() {
+        legend.removeFrom(leafletMap);
+      }
+
       var InterestPoint = function() {
         this.title = '';
         this.description = '';
         this.embedUrl = '';
-        this.thumbnailUrl = '';
         this.year = '';
-        this.order = '';
       }
 
       InterestPoint.prototype.toInput = function(key) {
@@ -210,9 +289,7 @@
         form.appendChild(this.toInput('title'));
         form.appendChild(this.toInput('description'));
         form.appendChild(this.toInput('embedUrl'));
-        form.appendChild(this.toInput('thumbnailUrl'));
         form.appendChild(this.toInput('year'));
-        form.appendChild(this.toInput('order'));
         return form;
       }
 
@@ -227,10 +304,11 @@
         if (data == null) return;
         var markers = data.markers;
         var popups = data.popups;
+        var interestPoints = data.interestPoints;
 
         // Update markers
         for (var i = 0; i < markers.length; i++) {
-          addMarkerToMap(markers[i], popups[i]);
+          addMarkerToMap(markers[i], popups[i], interestPoints[i]);
         }
 
         // Update UI
@@ -277,7 +355,8 @@
         var opts = {
           baseMap: currentTileLayer,
           markers: markers,
-          popups: popups
+          popups: popups,
+          interestPoints: interestPoints
         }
         var json = jsonStringify(opts);
         post(json, 'myapp')
@@ -287,9 +366,11 @@
         var baseMap = opts.baseMap || 'mapBox'; 
         var json_markers = [];
         var json_popups = [];
+        var json_interestPoints = [];
 
         var markers = opts.markers || [];
         var popups = opts.popups || [];
+        var interestPoints = opts.interestPoints || [];
 
         for (var i = 0; i < markers.length; i++ ) {
           var marker = {
@@ -303,14 +384,22 @@
           var popup = {
             content: encodeURIComponent(btoa(popups[i].getContent()))
           };
+          var interestPoint = {};
+          var keys = Object.keys(interestPoints[i]);
+          for (var j = 0; j < keys.length; j++) {
+            interestPoint[keys[j]] = encodeURIComponent(btoa(interestPoints[i][keys[j]]));
+          }
           json_markers.push(marker);
           json_popups.push(popup);
+          json_interestPoints.push(interestPoint);
+
         }
         return JSON.stringify({
           hash: hash, 
           baseMap: baseMap,
           markers: json_markers, 
-          popups: json_popups
+          popups: json_popups,
+          interestPoints: json_interestPoints
         });
       }
 
@@ -338,7 +427,8 @@
         xhr.send();
       }
 
-      function addMarkerToMap(myMarker, myPopup) {
+      function addMarkerToMap(myMarker, myPopup, myInterestPoint) {
+        console.log(myInterestPoint);
         var marker;
         var interestPoint;
 
@@ -351,6 +441,15 @@
           if (myMarker.map) {
             marker.addTo(leafletMap);
           } 
+          if (myInterestPoint) {
+            console.log(myInterestPoint);
+            interestPoint = new InterestPoint();
+
+            var keys = Object.keys(myInterestPoint);
+            for (var i = 0; i < keys.length; i++) {
+              interestPoint[keys[i]] = atob(myInterestPoint[keys[i]]);
+            }
+          }
         } else {
           var center = leafletMap.getCenter();        
           var latlng = [center.lat, center.lng];
@@ -374,7 +473,22 @@
         popup = L.popup({},marker);
         marker.bindPopup(popup);
 
+        var el = document.createElement('li');
+        el['id'] = 'interestPoint_' + i; 
+        el.innerHTML = i;
+        el.addEventListener("click", function (){
+          markers[i].openPopup()
+        })
+        frame.sly('add', el);
+
+        marker.on('popupclose', function() {
+          if (mode == "share") {
+            removeLegend();
+          }
+        });
+
         marker.on('popupopen', function() {
+          frame.sly('activate', i);
           if (mode == "edit") {
             var div = document.createElement("div");
             div["id"] = "content_" + i;
@@ -402,8 +516,9 @@
                     for (var j = 0; j < keys.length; j++) {
                       interestPoint[keys[j]] = inputs[keys[j]].value;
                     }
-
+                    leafletMap.closePopup();
                   });
+
                 }
               }
             });
@@ -414,7 +529,7 @@
                   interestPoints[i]['embedUrl'] +
                   '</div>';
             popups[i].setContent(contentString);
-
+            setLegend(i);
 
           }
 
@@ -533,6 +648,29 @@
             }
           });
 
+frame = $('#centered');
+    wrap  = frame.parent();
+
+    // Call Sly on frame
+    frame.sly({
+      horizontal: 1,
+      itemNav: 'centered',
+      smart: 1,
+      activateOn: 'click',
+      mouseDragging: 1,
+      touchDragging: 1,
+      releaseSwing: 1,
+      startAt: 0,
+      scrollBar: wrap.find('.scrollbar'),
+      scrollBy: 1,
+      speed: 300,
+      elasticBounds: 1,
+      easing: 'easeOutExpo',
+      dragHandle: 1,
+      dynamicHandle: 1,
+      clickBar: 1
+
+    });
         }
         document.addEventListener('DOMContentLoaded', init, false);
 
@@ -542,6 +680,18 @@
     <div id="map"></div>
     <div id="loading"></div>
     <div id="time-slider-controls"></div>
-    <div id="pin-slider"></div>
+    <div id="pin-slider">
+      <div class="wrap">
+        <div class="scrollbar">
+          <div class="handle">
+            <div class="mousearea"></div>
+          </div>
+        </div>
+        <div class="frame" id="centered">
+          <ul class="clearfix" id="list">
+          </ul>
+        </div>
+      </div>    
+    </div>
   </body>
 </html>
