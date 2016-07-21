@@ -122,6 +122,7 @@
       var tileLayer;
       var censusdata;
       var citydata;
+      var countydata;
 
       var gui;
       var mapOptions;
@@ -138,6 +139,10 @@
       var showNeighborhoods = false;
       var neighborhoodsLayer;
 
+      var showMunicipalities = false;
+      var municipalitiesLayer;
+
+
       var currentCensusColor = false;
 
       var currentDataLayer = '';
@@ -153,6 +158,7 @@
       var MapOptions = function() {
         this.tileLayer = 'toner';
         this.showNeighborhoods = false;
+        this.showMunicipalities = false;
         this.dataLayer = '';
         this.showRace = false;
         this.addMarker = function() {
@@ -171,6 +177,7 @@
         'initFileLoaded': false,
         'dataLayerLoaded': false,
         'neighborhoodLayerLoaded': false,
+        'municipalityLayerLoaded': false,
         'mapLoaded': false
       }
 
@@ -189,6 +196,8 @@
         // Update UI
         propelOptions.tileLayer = data.baseMap;
         propelOptions.showNeighborhoods = data.showNeighborhoods;
+        propelOptions.showMunicipalities = data.showMunicipalities;
+
         propelOptions.showRace = data.showRace;
 
         propelOptions.dataLayer = data.dataLayer;
@@ -203,6 +212,9 @@
 
         // Update Neighborhoods Layer
         setNeighborhoodsLayer(data.showNeighborhoods);
+
+        // Update Municipalities Layer
+        setMunicipalitiesLayer(data.showMunicipalities);
 
         //
         setRaceLayer(data.showRace);
@@ -237,6 +249,7 @@
         var opts = {
           baseMap: currentTileLayer,
           showNeighborhoods: showNeighborhoods,
+          showMunicipalities: showMunicipalities,
           showRace: showRace,
           dataLayer: currentDataLayer,
           markers: markers,
@@ -249,6 +262,7 @@
       function jsonStringify(opts) {
         var baseMap = opts.baseMap || 'toner'; 
         var showNeighborhoods = opts.showNeighborhoods ? true : false;
+        var showMunicipalities = opts.showMunicipalities ? true : false;
         var showRace = opts.showRace ? true : false;
         var dataLayer = opts.dataLayer || '';
         var json_markers = [];
@@ -276,6 +290,7 @@
           hash: hash, 
           baseMap: baseMap,
           showNeighborhoods: showNeighborhoods,
+          showMunicipalities: showMunicipalities,
           showRace: showRace,
           dataLayer: dataLayer,
           markers: json_markers, 
@@ -387,6 +402,15 @@
         showNeighborhoods = newValue;        
       }
 
+      var setMunicipalitiesLayer = function(newValue) {
+        if (newValue) {
+          leafletMap.addLayer(municipalitiesLayer);
+        } else {
+          leafletMap.removeLayer(municipalitiesLayer);
+        }
+        showMunicipalities = newValue;        
+      }
+
       var setRaceLayer = function(newValue) {
         showRace = newValue;        
         var el = document.getElementById('raceMapLabel');
@@ -425,6 +449,9 @@
 
         var f2 = gui.add(propelOptions, 'showNeighborhoods').name('Neighborhoods');
         f2.onChange(setNeighborhoodsLayer);
+
+        var f7 = gui.add(propelOptions, 'showMunicipalities').name('Municipalities');
+        f7.onChange(setMunicipalitiesLayer);
 
         var f6 = gui.add(propelOptions, 'showRace').name('Race');
         f6.onChange(setRaceLayer);
@@ -805,6 +832,74 @@
             //leafletMap.addLayer(neighborhoodsLayer);  
         }
 
+        function loadGeoJSON2(data) {
+          countydata = data;
+            // Set a default style for out the polygons will appear
+            var defaultStyle = {
+                color: "#333333",
+                weight: 2,
+                opacity: 0.6,
+                fillOpacity: 0.0,
+                fillColor: "#999999"
+            };
+            var highlightStyle = {
+                color: '#333333', 
+                weight: 4,
+                opacity: 0.8,
+                fillOpacity: 0.15,
+                fillColor: '#999999'
+            };       
+            var onEachFeature = function (feature, layer) {
+              layer.setStyle(defaultStyle);
+              layer.on("mouseover", function (e) {
+                // Change the style to the highlighted version
+                layer.setStyle(highlightStyle);
+              });
+             layer.on("mouseout", function (e) {
+                // Start by reverting the style back
+                layer.setStyle(defaultStyle); 
+              });              
+             
+              layer.on("click", function (e) {
+                // Change the style to the highlighted version
+                console.log(feature);
+              });
+
+              contentStr = "<div class=\"stats\">";
+              contentStr += "<h3>" + feature.properties['F0_LABEL'] + "</h3>";
+              contentStr += "<h4>School District: " + feature.properties['F0_SCHOOLD'] + "</h4>";
+/*              contentStr += "&nbsp;&nbsp;<strong>2010 Population</strong> " + feature.properties['Pop__2010'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Pop Change 00-10</strong> " + feature.properties['F__Pop__Change__00_10'] + "<br/>";
+              contentStr += "<h4>Race (2010)</h4>";
+              contentStr += "&nbsp;&nbsp;<strong>White</strong> " + feature.properties['SNAP_All_csv___White__2010_'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Black</strong> " + feature.properties['SNAP_All_csv___African_American'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Asian</strong> " + feature.properties['SNAP_All_csv___Asian__2010_'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Other</strong> " + feature.properties['SNAP_All_csv___Other__2010_'] + "<br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Hispanic (of any) " + feature.properties['SNAP_All_csv___Hispanic__of_any'] +"<br/>"
+              contentStr += "<h4>Housing (2010)</h4>";
+              contentStr += "&nbsp;&nbsp;<strong>Housing Units: " + feature.properties['SNAP_All_csv_Total___Units__201'] + "</strong><br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Occupied: " + feature.properties['SNAP_All_csv___Occupied_Units__'] + "</strong><br/>";
+              contentStr += "&nbsp;&nbsp;<strong>Vacant: " + feature.properties['SNAP_All_csv___Vacant_Units__20'] + "</strong><br/>";
+              contentStr += "</div>";
+              */
+              layer.bindPopup(contentStr);
+
+            }
+            municipalitiesLayer = L.geoJson(data, {
+              // And link up the function to run when loading each feature
+                onEachFeature: onEachFeature,
+                zIndex: 10
+            });
+            ready['municipalityLayerLoaded'] = true;
+            if (isReady()) {
+              console.log('Ready');
+              initData(initJsonData);
+            }
+
+            // Finally, add the layer to the map.
+            //leafletMap.addLayer(neighborhoodsLayer);  
+        }
+
         function init() {
           if (window.location.hash) {
             hash = window.location.hash.replace("#","");
@@ -820,6 +915,8 @@
           initGui();
           get('census_blocks_housing.geojson', initTiles);
           get('Neighborhoods_with_SNAP_Data.geojson', loadGeoJSON);
+          get('Allegheny_County_Municipal_Boundaries.geojson', loadGeoJSON2);
+
           initRacialDotMap(race_data);
         }
         document.addEventListener('DOMContentLoaded', init, false);
