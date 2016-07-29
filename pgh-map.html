@@ -74,8 +74,11 @@
       }
     </style>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+    <link rel="stylesheet" href="Control.Geocoder.css" />
 
     <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+    <script src="Control.Geocoder.js"></script>
+
     <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
     <script src="geojson-vt-dev.js"></script>
     <script src="L.CanvasTiles.js"></script>
@@ -817,6 +820,20 @@
           }
 
           leafletMap = initMap();
+
+          geocoder = L.Control.geocoder().addTo(leafletMap);
+          geocoder.setPosition('topleft');
+          geocoder.markGeocode = function(result) {
+              var bbox = result.bbox;
+              leafletMap.fitBounds(bbox);
+              L.polygon([
+                   bbox.getSouthEast(),
+                   bbox.getNorthEast(),
+                   bbox.getNorthWest(),
+                   bbox.getSouthWest()
+              ]).addTo(leafletMap);
+          };
+
           initGui();
           get('census_blocks_housing.geojson', initTiles);
           get('Neighborhoods_with_SNAP_Data.geojson', loadGeoJSON);
